@@ -1,23 +1,50 @@
 #include "monty.h"
 
-globals_t globals;
 
 /**
- * main - entry point to monty program.
- * @argc: numbers of arguments.
- * @argv: pointer to an array of string.
- *
- * Return: EXIT_SUCCESS.
- */
-int main(int argc, char *argv[])
+ * main - entry point
+ * @ac: number of arguments
+ * @av: array of arguments
+ * Return: 0 on success
+*/
+int main(int ac, char **av)
 {
-	stack_t *stack;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t read;
 
-	stack = NULL;
-	parse_arg(argc, argv);
-	read_line(&stack);
-	free(globals.lineptr);
-	free_stack(stack);
-	fclose(globals.fp);
+	global.line = NULL;
+	global.file = NULL;
+	global.stack = NULL;
+	global.line_number = 0;
+
+	if (ac != 2)
+	{
+		fprintf(stderr, "USAGE: monty file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	global.file = fopen(av[1], "r");
+	if (global.file == NULL)
+	{
+		fprintf(stderr, "Error: Can't open file %s\n", av[1]);
+		exit(EXIT_FAILURE);
+	}
+
+	global.file = global.file;
+
+	while ((read = getline(&line, &len, global.file)) != -1)
+	{
+		global.line_number++;
+
+		global.line = split(line, " \n\t\r");
+		if (global.line != NULL && global.line[0] != NULL)
+			get_op_func(global.line[0])(&global.stack, global.line_number);
+
+		free(global.line);
+	}
+
+	free(line);
+	free_all(global.stack, global.file);
 	return (EXIT_SUCCESS);
 }
